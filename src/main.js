@@ -1,5 +1,5 @@
 import { Taxi } from "./taxi";
-import { loadChartQuestion1, loadChartQuestion2, clearChart } from './plot';
+import { loadChartQuestion1, loadChartQuestion2, loadChartQuestion1PickupHour, clearChart } from './plot';
 
 function callbacksQuestion2(dataAvg, dataSum) {
     const avgBtn  = document.querySelector('#avgBtn');
@@ -47,11 +47,12 @@ const buildChartQuestion2 = async (taxi) => {
     callbacksQuestion2(dataAvg, dataSum);
 }
 
-function callbacksQuestion1(dataDistance) {
+function callbacksQuestion1(dataDistance, dataPickupHour) {
     const distanceBtn  = document.querySelector('#distanceBtn');
+    const pickupHourBtn  = document.querySelector('#pickupHourBtn');
     const clearBtn = document.querySelector('#clearBtn');
 
-    if (!distanceBtn) {
+    if (!distanceBtn || !pickupHourBtn) {
         return;
     }
 
@@ -60,13 +61,18 @@ function callbacksQuestion1(dataDistance) {
         await loadChartQuestion1(dataDistance);
     });
 
+    pickupHourBtn.addEventListener('click', async () => {
+        clearChart();
+        await loadChartQuestion1PickupHour(dataPickupHour);
+    });
+
     clearBtn.addEventListener('click', async () => {
         clearChart();
     });
 }
 
 const buildChartQuestion1 = async (taxi) => {
-    let sql = `
+    let sqlAvgDistance = `
         SELECT
             avg(trip_distance) as trip_distance,
             CASE
@@ -80,14 +86,28 @@ const buildChartQuestion1 = async (taxi) => {
         ORDER BY day_type
     `;
 
-    const distanceAvgByDay = await taxi.query(sql);
-    console.log("distanceAvgByDay", distanceAvgByDay);
+    const distanceAvgByDay = await taxi.query(sqlAvgDistance);
 
-    // sql = sql.replace(' avg(trip_distance) as trip_distance', 'count(*) as quantity');
-    // const qauntityByDay = await taxi.query(sql);
-    // console.log("qauntityByDay", qauntityByDay);
 
-    callbacksQuestion1(distanceAvgByDay);
+    let sqlPickupHour = `
+        SELECT
+            cast(count(*) as int) as quantity,
+            CASE
+                WHEN dayofweek(lpep_pickup_datetime) IN (0, 6) THEN 'weekend'
+                ELSE 'week_day'
+            END AS day_type,
+            cast(hour(lpep_pickup_datetime) as int) as hour
+        FROM
+            taxi_2023
+        GROUP BY
+            day_type,hour
+        ORDER BY day_type, hour
+    `;
+
+    const pickupHourData = await taxi.query(sqlPickupHour);
+    console.log("sqlPickupHour", pickupHourData);
+
+    callbacksQuestion1(distanceAvgByDay, pickupHourData);
 }
 
 
@@ -102,7 +122,6 @@ const hideButtons = async (selectedQuestion) => {
     } else if (selectedQuestion === '2') {
         buttonContainerQuestion1.style.display = 'none';
         buttonContainerQuestion2.style.display = 'flex';
-
     }
 }
 
@@ -114,6 +133,7 @@ const selectListener = () => {
 
     hideButtons(select.value);
     select.addEventListener('change', () => {
+        clearChart();
         hideButtons(select.value);
     });
 }
