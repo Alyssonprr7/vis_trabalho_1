@@ -9,11 +9,21 @@
 
 <body>
     <div class="main-container">
+        <h1>Taxi</h1>
+        <select name="question-selector" id="question-select">
+            <option value="1" selected>Questão 1</option>
+            <option value="2">Questão 2</option>
+        </select>
         <svg>
         </svg>
         <div class="buttom-container">
-            <button id="sumBtn">Sum</button>
-            <button id="avgBtn">Average</button>
+            <div class="question-1-button-container">
+                <button id="distanceBtn">Distância</button>
+            </div>
+            <div class="question-2-button-container" >
+                <button id="sumBtn">Sum</button>
+                <button id="avgBtn">Average</button>
+            </div>
             <button id="clearBtn">Clear Chart</button>
         </div>
     </div>

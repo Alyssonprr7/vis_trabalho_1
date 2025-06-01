@@ -1,7 +1,7 @@
 import { Taxi } from "./taxi";
-import { loadChart, clearChart } from './plot';
+import { loadChartQuestion1, loadChartQuestion2, clearChart } from './plot';
 
-function callbacks(dataAvg, dataSum) {
+function callbacksQuestion2(dataAvg, dataSum) {
     const avgBtn  = document.querySelector('#avgBtn');
     const sumBtn  = document.querySelector('#sumBtn');
     const clearBtn = document.querySelector('#clearBtn');
@@ -12,12 +12,12 @@ function callbacks(dataAvg, dataSum) {
 
     avgBtn.addEventListener('click', async () => {
         clearChart();
-        await loadChart(dataAvg);
+        await loadChartQuestion2(dataAvg);
     });
 
     sumBtn.addEventListener('click', async () => {
         clearChart();
-        await loadChart(dataSum);
+        await loadChartQuestion2(dataSum);
     });
 
     clearBtn.addEventListener('click', async () => {
@@ -25,12 +25,7 @@ function callbacks(dataAvg, dataSum) {
     });
 }
 
-window.onload = async () => {
-    const taxi = new Taxi();
-
-    await taxi.init();
-    await taxi.loadTaxi();
-
+const buildChartQuestion2 = async (taxi) => {
     let sql = `
         SELECT
             avg(tip_amount) as tip_amount,
@@ -40,7 +35,6 @@ window.onload = async () => {
         GROUP BY
             hour
         ORDER BY hour
-        LIMIT ${100}
     `;
 
     const dataAvg = await taxi.query(sql);
@@ -50,6 +44,88 @@ window.onload = async () => {
     const dataSum = await taxi.query(sql);
     console.log(dataSum);
 
-    callbacks(dataAvg, dataSum);
+    callbacksQuestion2(dataAvg, dataSum);
+}
+
+function callbacksQuestion1(dataDistance) {
+    const distanceBtn  = document.querySelector('#distanceBtn');
+    const clearBtn = document.querySelector('#clearBtn');
+
+    if (!distanceBtn) {
+        return;
+    }
+
+    distanceBtn.addEventListener('click', async () => {
+        clearChart();
+        await loadChartQuestion1(dataDistance);
+    });
+
+    clearBtn.addEventListener('click', async () => {
+        clearChart();
+    });
+}
+
+const buildChartQuestion1 = async (taxi) => {
+    let sql = `
+        SELECT
+            avg(trip_distance) as trip_distance,
+            CASE
+                WHEN dayofweek(lpep_pickup_datetime) IN (0, 6) THEN 'Fim de semana'
+                ELSE 'Dia útil'
+            END AS day_type
+        FROM
+            taxi_2023
+        GROUP BY
+            day_type
+        ORDER BY day_type
+    `;
+
+    const distanceAvgByDay = await taxi.query(sql);
+    console.log("distanceAvgByDay", distanceAvgByDay);
+
+    // sql = sql.replace(' avg(trip_distance) as trip_distance', 'count(*) as quantity');
+    // const qauntityByDay = await taxi.query(sql);
+    // console.log("qauntityByDay", qauntityByDay);
+
+    callbacksQuestion1(distanceAvgByDay);
+}
+
+
+const hideButtons = async (selectedQuestion) => {
+    const buttonContainerQuestion1 = document.querySelector('.question-1-button-container');
+    const buttonContainerQuestion2 = document.querySelector('.question-2-button-container');
+
+    if (selectedQuestion === '1') {
+        buttonContainerQuestion2.style.display = 'none';
+        buttonContainerQuestion1.style.display = 'flex';
+
+    } else if (selectedQuestion === '2') {
+        buttonContainerQuestion1.style.display = 'none';
+        buttonContainerQuestion2.style.display = 'flex';
+
+    }
+}
+
+const selectListener = () => {
+    const select = document.getElementById('question-select');
+    if (!select) {
+        return;
+    }
+
+    hideButtons(select.value);
+    select.addEventListener('change', () => {
+        hideButtons(select.value);
+    });
+}
+
+window.onload = async () => {
+    selectListener();
+    const taxi = new Taxi();
+    
+    await taxi.init();
+    await taxi.loadTaxi();
+    
+    await buildChartQuestion1(taxi);
+    await buildChartQuestion2(taxi);
 };
 
