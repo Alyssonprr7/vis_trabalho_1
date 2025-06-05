@@ -1,5 +1,5 @@
 import { Taxi } from "./taxi";
-import { loadChartQuestion1, loadChartQuestion2, loadChartQuestion1PickupHour, clearChart } from './plot';
+import { loadChartQuestion1, loadChartQuestion2, loadChartQuestion1PickupHour, clearChart, loadChartQuestion1TotalAmount } from './plot';
 
 function callbacksQuestion2(dataAvg, dataSum) {
     const avgBtn  = document.querySelector('#avgBtn');
@@ -47,12 +47,13 @@ const buildChartQuestion2 = async (taxi) => {
     callbacksQuestion2(dataAvg, dataSum);
 }
 
-function callbacksQuestion1(dataDistance, dataPickupHour) {
+function callbacksQuestion1(dataDistance, dataPickupHour, dataTotalAmount) {
     const distanceBtn  = document.querySelector('#distanceBtn');
     const pickupHourBtn  = document.querySelector('#pickupHourBtn');
+    const totalAmountBtn = document.querySelector('#totalAmountBtn')
     const clearBtn = document.querySelector('#clearBtn');
 
-    if (!distanceBtn || !pickupHourBtn) {
+    if (!distanceBtn || !pickupHourBtn || !totalAmountBtn) {
         return;
     }
 
@@ -65,6 +66,11 @@ function callbacksQuestion1(dataDistance, dataPickupHour) {
         clearChart();
         await loadChartQuestion1PickupHour(dataPickupHour);
     });
+
+    totalAmountBtn.addEventListener('click', async () => {
+        clearChart();
+        await loadChartQuestion1TotalAmount(dataTotalAmount); // fazer o dataTotalAmount
+    })
 
     clearBtn.addEventListener('click', async () => {
         clearChart();
@@ -107,7 +113,25 @@ const buildChartQuestion1 = async (taxi) => {
     const pickupHourData = await taxi.query(sqlPickupHour);
     console.log("sqlPickupHour", pickupHourData);
 
-    callbacksQuestion1(distanceAvgByDay, pickupHourData);
+    let sqlTotalAmount = `
+        SELECT
+            AVG(total_amount) AS avg_fare,
+            CASE
+                WHEN DAYOFWEEK(lpep_pickup_datetime) IN (1, 7) THEN 'Fim de semana'
+                ELSE 'Dia útil'
+        END AS day_type
+    FROM
+        taxi_2023
+    GROUP BY
+        day_type
+    ORDER BY
+        day_type;
+
+    `;
+
+    const totalAmountData = await taxi.query(sqlTotalAmount);
+
+    callbacksQuestion1(distanceAvgByDay, pickupHourData, totalAmountData);
 }
 
 

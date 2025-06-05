@@ -96,6 +96,11 @@ export async function loadChartQuestion1PickupHour(data, margens = { left: 75, r
     .text(d => d[0]);
 };
 
+export async function loadChartQuestion1TotalAmount(data, margens = { left: 75, right: 50, top: 50, bottom: 75}) {
+    const treatedData = data.map(d => ({x: d.day_type, y: d.avg_fare}));
+    plotBarChart(treatedData, margens, {x: 'Dia', y: 'Média do valor total ($)'})
+}
+
 const plotBarChart = (data, margens = { left: 75, right: 50, top: 50, bottom: 75 }, labels) => {
     const svg = d3.select('svg');
 
