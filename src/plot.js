@@ -2,12 +2,12 @@ import * as d3 from 'd3';
 
 export async function loadChartQuestion2(data, margens = { left: 75, right: 50, top: 50, bottom: 75 }) {
     const treatedData = data.map(d => ({ x: d.hour, y: d.tip_amount }));
-    plotBarChart(treatedData, margens, { x: 'Hora do dia', y: 'Gorjeta ($)' });
+    plotBarChart(treatedData, margens, { x: 'Hora do dia', y: 'Gorjeta ($)' }, 'steelblue');
 }
 
 export async function loadChartQuestion1(data, margens = { left: 75, right: 50, top: 50, bottom: 75 }) {
     const treatedData = data.map(d => ({ x: d.day_type, y: d.trip_distance }));
-    plotBarChart(treatedData, margens, { x: 'Dia', y: 'Média da distância (Milhas)' });
+    plotBarChart(treatedData, margens, { x: 'Dia', y: 'Média da distância (Milhas)' }, 'steelblue');
 }
 
 export async function loadChartQuestion1PickupHour(data, margens = { left: 75, right: 50, top: 50, bottom: 75 }) {
@@ -96,7 +96,12 @@ export async function loadChartQuestion1PickupHour(data, margens = { left: 75, r
     .text(d => d[0]);
 };
 
-const plotBarChart = (data, margens = { left: 75, right: 50, top: 50, bottom: 75 }, labels) => {
+export async function loadChartQuestion1TotalAmount(data, margens = { left: 75, right: 50, top: 50, bottom: 75}) {
+    const treatedData = data.map(d => ({x: d.day_type, y: d.avg_fare}));
+    plotBarChart(treatedData, margens, {x: 'Dia', y: 'Média do valor total ($)'}, 'green')
+}
+
+const plotBarChart = (data, margens = { left: 75, right: 50, top: 50, bottom: 75 }, labels, barColor) => {
     const svg = d3.select('svg');
 
     if (!svg) {
@@ -166,7 +171,7 @@ const plotBarChart = (data, margens = { left: 75, right: 50, top: 50, bottom: 75
         .attr('y', d => mapY(d.y))
         .attr('width', mapX.bandwidth()) 
         .attr('height', d => svgHeight - mapY(d.y))
-        .attr('fill', 'steelblue');
+        .attr('fill', barColor);
 
     bars.exit()
         .remove();
@@ -176,7 +181,7 @@ const plotBarChart = (data, margens = { left: 75, right: 50, top: 50, bottom: 75
         .attr('y', d => mapY(d.y))
         .attr('width', mapX.bandwidth())
         .attr('height', d => svgHeight - mapY(d.y))
-        .attr('fill', 'steelblue');
+        .attr('fill', barColor);
 
     d3.select('#group')
         .attr('transform', `translate(${margens.left}, ${margens.top})`);
