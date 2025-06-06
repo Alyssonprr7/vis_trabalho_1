@@ -1,5 +1,5 @@
 import { Taxi } from "./taxi";
-import { loadChartQuestion1, loadChartQuestion2, loadChartQuestion1PickupHour, clearChart, loadChartQuestion1TotalAmount } from './plot';
+import { loadChartQuestion1, loadChartQuestion2, loadChartQuestion1PickupHour, clearChart, loadChartQuestion1TotalAmount, loadChartQuestion1AvgRaceDuration } from './plot';
 
 function callbacksQuestion2(dataAvg, dataSum) {
     const avgBtn  = document.querySelector('#avgBtn');
@@ -47,13 +47,14 @@ const buildChartQuestion2 = async (taxi) => {
     callbacksQuestion2(dataAvg, dataSum);
 }
 
-function callbacksQuestion1(dataDistance, dataPickupHour, dataTotalAmount) {
+function callbacksQuestion1(dataDistance, dataPickupHour, dataTotalAmount, AvgRaceDurationData) {
     const distanceBtn  = document.querySelector('#distanceBtn');
     const pickupHourBtn  = document.querySelector('#pickupHourBtn');
-    const totalAmountBtn = document.querySelector('#totalAmountBtn')
+    const totalAmountBtn = document.querySelector('#totalAmountBtn');
+    const AvgRaceDuration = document.querySelector('#AvgRaceDuration');
     const clearBtn = document.querySelector('#clearBtn');
 
-    if (!distanceBtn || !pickupHourBtn || !totalAmountBtn) {
+    if (!distanceBtn || !pickupHourBtn || !totalAmountBtn || !AvgRaceDuration) {
         return;
     }
 
@@ -71,6 +72,11 @@ function callbacksQuestion1(dataDistance, dataPickupHour, dataTotalAmount) {
         clearChart();
         await loadChartQuestion1TotalAmount(dataTotalAmount); // fazer o dataTotalAmount
     })
+
+    AvgRaceDuration.addEventListener('click', async() => {
+        clearChart();
+        await loadChartQuestion1AvgRaceDuration(AvgRaceDurationData);
+    } )
 
     clearBtn.addEventListener('click', async () => {
         clearChart();
@@ -129,9 +135,32 @@ const buildChartQuestion1 = async (taxi) => {
 
     `;
 
+    let sqlAvgRaceDuration = ` 
+        SELECT
+            avg(EXTRACT(EPOCH FROM (lpep_dropoff_datetime - lpep_pickup_datetime))/60) as trip_duration,
+            CASE
+                WHEN dayofweek(lpep_pickup_datetime) = 1 THEN 'Segunda'
+                WHEN dayofweek(lpep_pickup_datetime) = 2 THEN 'Terça'
+                WHEN dayofweek(lpep_pickup_datetime) = 3 THEN 'Quarta'
+                WHEN dayofweek(lpep_pickup_datetime) = 4 THEN 'Quinta'
+                WHEN dayofweek(lpep_pickup_datetime) = 5 THEN 'Sexta'
+                WHEN dayofweek(lpep_pickup_datetime) = 6 THEN 'Sábado'
+                WHEN dayofweek(lpep_pickup_datetime) = 0 THEN 'Domingo'
+            END AS day_name,
+            CASE
+                WHEN dayofweek(lpep_pickup_datetime) = 0 THEN 7
+                ELSE dayofweek(lpep_pickup_datetime)
+            END as day_order
+        FROM
+            taxi_2023
+        GROUP BY
+            day_name, day_order
+        ORDER BY day_order`;
+    
     const totalAmountData = await taxi.query(sqlTotalAmount);
+    const AvgRaceDurationData = await taxi.query(sqlAvgRaceDuration);
 
-    callbacksQuestion1(distanceAvgByDay, pickupHourData, totalAmountData);
+    callbacksQuestion1(distanceAvgByDay, pickupHourData, totalAmountData, AvgRaceDurationData);
 }
 
 
